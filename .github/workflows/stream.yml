@@ -32,9 +32,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Dependencies
-        run: npm install --silent
-
       - name: Verify Assets
         run: |
           echo "=== Audio Libraries ==="

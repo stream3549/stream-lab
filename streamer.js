@@ -93,26 +93,36 @@ function startFfmpeg() {
   ].join('');
 
   const args = [
+    // Audio input — read at real-time rate
     '-re',
     '-f', 'concat',
     '-safe', '0',
     '-i', 'playlist.txt',
+    // Video background — loop indefinitely
+    '-re',
     '-stream_loop', '-1',
     '-i', bg,
+    // Filter + mapping
     '-filter_complex', filterGraph,
     '-map', '[v]',
     '-map', '0:a',
+    // Video encoding
     '-c:v', 'libx264',
     '-preset', 'veryfast',
-    '-b:v', '4000k',
-    '-maxrate', '4000k',
-    '-bufsize', '8000k',
+    '-tune', 'zerolatency',
+    '-b:v', '2500k',
+    '-maxrate', '2500k',
+    '-bufsize', '5000k',
     '-pix_fmt', 'yuv420p',
     '-g', '50',
+    '-keyint_min', '50',
+    // Audio encoding
     '-c:a', 'aac',
     '-b:a', '128k',
     '-ar', '44100',
+    // Output
     '-f', 'flv',
+    '-flvflags', 'no_duration_filesize',
     `rtmp://a.rtmp.youtube.com/live2/${streamKey}`
   ];
 
