@@ -39,6 +39,7 @@ let currentFfmpeg = null;
 let streamType = '';
 let streamConfig = null;
 let streamKey = '';
+const sessionNumber = parseInt(process.env.SESSION_NUMBER || '1', 10);
 
 // ─── Generate Playlist File ─────────────────────────────────────────
 function generatePlaylist() {
@@ -110,9 +111,9 @@ function startFfmpeg() {
     '-c:v', 'libx264',
     '-preset', 'veryfast',
     '-tune', 'zerolatency',
-    '-b:v', '2500k',
-    '-maxrate', '2500k',
-    '-bufsize', '5000k',
+    '-b:v', '4000k',
+    '-maxrate', '4000k',
+    '-bufsize', '8000k',
     '-pix_fmt', 'yuv420p',
     '-g', '50',
     '-keyint_min', '50',
@@ -160,7 +161,8 @@ async function triggerNextRunner() {
     return;
   }
 
-  console.log(`[DAISY-CHAIN] Triggering next runner (type: ${streamType})...`);
+  const nextSession = sessionNumber + 1;
+  console.log(`[DAISY-CHAIN] Triggering next runner (type: ${streamType}, session: ${nextSession})...`);
   try {
     const url = `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`;
     const res = await fetch(url, {
@@ -171,12 +173,15 @@ async function triggerNextRunner() {
       },
       body: JSON.stringify({
         ref: 'main',
-        inputs: { stream_type: streamType }
+        inputs: {
+          stream_type: streamType,
+          session_number: String(nextSession)
+        }
       })
     });
 
     if (res.ok || res.status === 204) {
-      console.log('[DAISY-CHAIN] Next runner triggered successfully!');
+      console.log(`[DAISY-CHAIN] Next runner (Session #${nextSession}) triggered successfully!`);
     } else {
       const body = await res.text();
       console.error(`[DAISY-CHAIN] Failed (${res.status}): ${body}`);
@@ -227,6 +232,7 @@ function boot() {
   }
 
   console.log(`[CONFIG] Stream Type:  ${streamType.toUpperCase()}`);
+  console.log(`[CONFIG] Session Num:  #${sessionNumber}`);
   console.log(`[CONFIG] Playlist:     ${streamConfig.playlist}`);
   console.log(`[CONFIG] Background:   ${streamConfig.background}`);
   console.log(`[CONFIG] Session Time: ${Math.floor(SESSION_DURATION_MS / 60000)} minutes`);
@@ -237,8 +243,14 @@ function boot() {
   startFfmpeg();
 
   // Schedule daisy-chain shutdown
-  console.log(`[TIMER] Auto daisy-chain in ${Math.floor(SESSION_DURATION_MS / 60000)} minutes`);
-  setTimeout(() => shutdown(true), SESSION_DURATION_MS);
+  const shouldChain = sessionNumber < 2;
+  if (shouldChain) {
+    console.log(`[TIMER] Auto daisy-chain (Session #${sessionNumber + 1}) in ${Math.floor(SESSION_DURATION_MS / 60000)} minutes`);
+    setTimeout(() => shutdown(true), SESSION_DURATION_MS);
+  } else {
+    console.log(`[TIMER] Final Session (#${sessionNumber}) reached. Stream will stop in ${Math.floor(SESSION_DURATION_MS / 60000)} minutes`);
+    setTimeout(() => shutdown(false), SESSION_DURATION_MS);
+  }
 }
 
 // ─── Error Handlers ─────────────────────────────────────────────────

@@ -7,6 +7,11 @@ on:
         required: false
         default: 'auto'
         type: string
+      session_number:
+        description: 'Current session number (1 or 2)'
+        required: false
+        default: '1'
+        type: string
   schedule:
     # Session 1: Minecraft (US Night) — 1:00 AM UTC = 9:00 PM EST = 6:30 AM IST
     - cron: '0 1 * * *'
@@ -45,6 +50,7 @@ jobs:
       - name: Launch Stream Engine
         env:
           STREAM_TYPE: ${{ github.event.inputs.stream_type || 'auto' }}
+          SESSION_NUMBER: ${{ github.event.inputs.session_number || '1' }}
           STREAM_KEY_MINECRAFT: ${{ secrets.STREAM_KEY_MINECRAFT }}
           STREAM_KEY_CHILLOUT: ${{ secrets.STREAM_KEY_CHILLOUT }}
           GH_PAT: ${{ secrets.GH_PAT }}
