@@ -1,0 +1,54 @@
+name: Autonomous Stream Engine
+on:
+  workflow_dispatch:
+    inputs:
+      stream_type:
+        description: 'auto, minecraft, or chillout'
+        required: false
+        default: 'auto'
+        type: string
+  schedule:
+    # Session 1: Minecraft (US Night) — 1:00 AM UTC = 9:00 PM EST = 6:30 AM IST
+    - cron: '0 1 * * *'
+    # Session 2: Chillout (US Day) — 1:00 PM UTC = 9:00 AM EST = 6:30 PM IST
+    - cron: '0 13 * * *'
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install FFmpeg & Fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg fonts-dejavu > /dev/null 2>&1
+          echo "FFmpeg $(ffmpeg -version 2>&1 | head -1 | cut -d' ' -f3) installed"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Dependencies
+        run: npm install --silent
+
+      - name: Verify Assets
+        run: |
+          echo "=== Audio Libraries ==="
+          echo "LOFI: $(ls playlists/lofi/*.mp3 2>/dev/null | wc -l) tracks"
+          echo "LEGEND: $(ls playlists/legend/*.mp3 2>/dev/null | wc -l) tracks"
+          echo "=== Backgrounds ==="
+          ls -lh backgrounds/*.mp4
+          echo "=== Fonts ==="
+          ls /usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf && echo "Font OK"
+
+      - name: Launch Stream Engine
+        env:
+          STREAM_TYPE: ${{ github.event.inputs.stream_type || 'auto' }}
+          STREAM_KEY_MINECRAFT: ${{ secrets.STREAM_KEY_MINECRAFT }}
+          STREAM_KEY_CHILLOUT: ${{ secrets.STREAM_KEY_CHILLOUT }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: node streamer.js

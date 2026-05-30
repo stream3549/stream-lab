@@ -1,0 +1,16 @@
+{
+  "name": "stream-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Autonomous stream engine",
+  "main": "streamer.js",
+  "scripts": {
+    "start": "node streamer.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.8"
+  },
+  "devDependencies": {
+    "tweetsodium": "^0.0.4"
+  }
+}
