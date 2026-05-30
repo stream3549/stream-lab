@@ -208,7 +208,27 @@ async function shutdown(triggerNext) {
 
   if (currentFfmpeg) {
     currentFfmpeg._intentionalKill = true;
-    try { currentFfmpeg.kill('SIGKILL'); } catch (e) {}
+    console.log('[SHUTDOWN] Sending SIGTERM to FFmpeg for graceful close...');
+    try {
+      currentFfmpeg.kill('SIGTERM');
+      // Wait up to 2 seconds for clean exit, otherwise force kill
+      await new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+          if (currentFfmpeg) {
+            console.log('[SHUTDOWN] FFmpeg did not exit. Escalating to SIGKILL...');
+            try { currentFfmpeg.kill('SIGKILL'); } catch (e) {}
+          }
+          resolve();
+        }, 2000);
+
+        currentFfmpeg.on('exit', () => {
+          clearTimeout(timeout);
+          resolve();
+        });
+      });
+    } catch (e) {
+      console.error('[SHUTDOWN] Error during shutdown:', e.message);
+    }
     currentFfmpeg = null;
   }
 
