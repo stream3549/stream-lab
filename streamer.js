@@ -161,8 +161,15 @@ async function triggerNextRunner() {
     return;
   }
 
-  const nextSession = sessionNumber + 1;
-  console.log(`[DAISY-CHAIN] Triggering next runner (type: ${streamType}, session: ${nextSession})...`);
+  let nextStreamType = streamType;
+  let nextSessionNumber = sessionNumber + 1;
+
+  if (sessionNumber >= 2) {
+    nextStreamType = streamType === 'minecraft' ? 'chillout' : 'minecraft';
+    nextSessionNumber = 1;
+  }
+
+  console.log(`[DAISY-CHAIN] Triggering next runner (type: ${nextStreamType}, session: ${nextSessionNumber})...`);
   try {
     const url = `https://api.github.com/repos/${REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches`;
     const res = await fetch(url, {
@@ -174,14 +181,14 @@ async function triggerNextRunner() {
       body: JSON.stringify({
         ref: 'main',
         inputs: {
-          stream_type: streamType,
-          session_number: String(nextSession)
+          stream_type: nextStreamType,
+          session_number: String(nextSessionNumber)
         }
       })
     });
 
     if (res.ok || res.status === 204) {
-      console.log(`[DAISY-CHAIN] Next runner (Session #${nextSession}) triggered successfully!`);
+      console.log(`[DAISY-CHAIN] Next runner (type: ${nextStreamType.toUpperCase()}, Session #${nextSessionNumber}) triggered successfully!`);
     } else {
       const body = await res.text();
       console.error(`[DAISY-CHAIN] Failed (${res.status}): ${body}`);
@@ -242,15 +249,17 @@ function boot() {
   // Start streaming
   startFfmpeg();
 
-  // Schedule daisy-chain shutdown
-  const shouldChain = sessionNumber < 2;
-  if (shouldChain) {
-    console.log(`[TIMER] Auto daisy-chain (Session #${sessionNumber + 1}) in ${Math.floor(SESSION_DURATION_MS / 60000)} minutes`);
-    setTimeout(() => shutdown(true), SESSION_DURATION_MS);
-  } else {
-    console.log(`[TIMER] Final Session (#${sessionNumber}) reached. Stream will stop in ${Math.floor(SESSION_DURATION_MS / 60000)} minutes`);
-    setTimeout(() => shutdown(false), SESSION_DURATION_MS);
+  // Schedule daisy-chain shutdown (Option B: Infinite Loop)
+  let nextStreamType = streamType;
+  let nextSessionNumber = sessionNumber + 1;
+  if (sessionNumber >= 2) {
+    nextStreamType = streamType === 'minecraft' ? 'chillout' : 'minecraft';
+    nextSessionNumber = 1;
   }
+
+  console.log(`[TIMER] Current Session: #${sessionNumber}`);
+  console.log(`[TIMER] Next session will be Session #${nextSessionNumber} (${nextStreamType.toUpperCase()}) in ${Math.floor(SESSION_DURATION_MS / 60000)} minutes`);
+  setTimeout(() => shutdown(true), SESSION_DURATION_MS);
 }
 
 // ─── Error Handlers ─────────────────────────────────────────────────
