@@ -12,11 +12,6 @@ on:
         required: false
         default: '1'
         type: string
-  schedule:
-    # Session 1: Minecraft (US Night) — 1:00 AM UTC = 9:00 PM EST = 6:30 AM IST
-    - cron: '0 1 * * *'
-    # Session 2: Chillout (US Day) — 1:00 PM UTC = 9:00 AM EST = 6:30 PM IST
-    - cron: '0 13 * * *'
 
 jobs:
   stream:
