@@ -5,9 +5,9 @@ const fs = require('fs');
 const STREAMS = {
   minecraft: {
     playlist: 'playlists/lofi',
-    background: 'backgrounds/minecraft.mp4',
+    background: 'backgrounds/girl.mp4',
     streamKeyEnv: 'STREAM_KEY_MINECRAFT',
-    label: 'MINECRAFT LOFI'
+    label: 'LOFI CHILLOUT'
   },
   chillout: {
     playlist: 'playlists/legend',
